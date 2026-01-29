@@ -8,6 +8,9 @@
 #include "Spaceship.h"
 #include "BoundingShape.h"
 
+int speed = 10;
+int turn = 90;
+
 // PUBLIC INSTANCE CONSTRUCTORS ///////////////////////////////////////////////
 
 /** Constructor. Takes arguments from command line, just in case. */
@@ -70,6 +73,15 @@ void Asteroids::OnSpecialKeyPressed(int key, int x, int y)
 {
 	switch (key)
 	{
+	case GLUT_KEY_UP: 
+		mSpaceship->Thrust(speed);
+		break;
+	case GLUT_KEY_LEFT:
+		mSpaceship->Rotate(turn);
+		break;
+	case GLUT_KEY_RIGHT:
+		mSpaceship->Rotate(-turn);
+		break;
 	// Default case - do nothing
 	default: break;
 	}
@@ -79,6 +91,15 @@ void Asteroids::OnSpecialKeyReleased(int key, int x, int y)
 {
 	switch (key)
 	{
+	case GLUT_KEY_UP:
+		mSpaceship->Thrust(0);
+		break;
+	case GLUT_KEY_LEFT:
+		mSpaceship->Rotate(0);
+		break;
+	case GLUT_KEY_RIGHT:
+		mSpaceship->Rotate(0);
+		break;
 	// Default case - do nothing
 	default: break;
 	} 

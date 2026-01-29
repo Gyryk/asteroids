@@ -5,6 +5,9 @@
 
 using namespace std;
 
+float bullet_speed = 30;
+int bullet_life = 2000;
+
 // PUBLIC INSTANCE CONSTRUCTORS ///////////////////////////////////////////////
 
 /**  Default constructor. */
@@ -55,6 +58,15 @@ void Spaceship::Render(void)
 	// Finish drawing closed shape
 	glEnd();
 
+	if (mThrust > 0) {
+		glBegin(GL_LINE_STRIP);
+			glColor3f(0.8, 0.4, 0.1);
+			glVertex3f(-2, -1, 0);
+			glVertex3f(-4, 0, 0);
+			glVertex3f(-2, 1, 0);
+		glEnd();
+	}
+
 	// Enable lighting
 	glEnable(GL_LIGHTING);
 	// Call base class to render debug graphics if required
@@ -65,6 +77,9 @@ void Spaceship::Render(void)
 void Spaceship::Thrust(float t)
 {
 	mThrust = t;
+
+	mAcceleration.x = mThrust * cos(DEG2RAD * mAngle);
+	mAcceleration.y = mThrust * sin(DEG2RAD * mAngle);
 }
 
 /** Set the rotation. */
@@ -78,6 +93,15 @@ void Spaceship::Shoot(void)
 {
 	// Check the world exists
 	if (!mWorld) return;
+
+	GLVector3f spaceship_heading(cos(DEG2RAD * mAngle), sin(DEG2RAD * mAngle), 0);
+	spaceship_heading.normalize();
+
+	GLVector3f bullet_position = mPosition + (spaceship_heading * 4);
+	GLVector3f bullet_velocity = mVelocity + spaceship_heading * bullet_speed;
+
+	shared_ptr<GameObject> bullet(new Bullet(bullet_position, bullet_velocity, mAcceleration, mAngle, 0, bullet_life));
+	mWorld->AddObject(bullet);
 }
 
 bool Spaceship::CollisionTest(shared_ptr<GameObject> o)
