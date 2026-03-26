@@ -1,2 +1,2 @@
 # asteroids
-Asteroids made in City Engine for Games Technology
+Asteroids made in OpenGL for Games Technology
