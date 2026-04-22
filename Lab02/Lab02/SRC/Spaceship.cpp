@@ -2,6 +2,7 @@
 #include "GameWorld.h"
 #include "Bullet.h"
 #include "Spaceship.h"
+#include "BoundingSphere.h"
 
 using namespace std;
 
@@ -108,6 +109,7 @@ void Spaceship::Shoot(void)
 	// Construct a new bullet
 	shared_ptr<GameObject> bullet
 	(new Bullet(bullet_position, bullet_velocity, mAcceleration, mAngle, 0, 2000));
+	bullet->SetBoundingShape(make_shared<BoundingSphere>(bullet->GetThisPtr(), 1.0f));
 	// Add the new bullet to the game world
 	mWorld->AddObject(bullet);
 }

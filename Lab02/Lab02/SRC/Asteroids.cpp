@@ -1,3 +1,5 @@
+#include "Asteroid.h"
+#include "BoundingSphere.h" 
 #include "Asteroids.h"
 #include "Animation.h"
 #include "AnimationManager.h"
@@ -38,6 +40,8 @@ void Asteroids::Start()
 	mGameWindow->AddKeyboardListener(thisPtr);
 	// Create a spaceship and add it to the world
 	mGameWorld->AddObject(CreateSpaceship());
+	// Create some asteroids and add them to the world 
+	CreateAsteroids(10);
 
 	// Start the game
 	GameSession::Start();
@@ -132,4 +136,13 @@ shared_ptr<GameObject> Asteroids::CreateSpaceship()
 	mSpaceship->Reset();
 	// Return the spaceship so it can be added to the world
 	return mSpaceship;
+}
+
+void Asteroids::CreateAsteroids(const uint num_asteroids)
+{
+	for (uint i = 0; i < num_asteroids; i++) {
+		shared_ptr<GameObject> asteroid = make_shared<Asteroid>();
+		asteroid->SetBoundingShape(make_shared<BoundingSphere>(asteroid->GetThisPtr(), 10.0f));
+		mGameWorld->AddObject(asteroid);
+	}
 }

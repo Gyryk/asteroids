@@ -103,13 +103,16 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\SRC\Asteroid.cpp" />
     <ClCompile Include="..\..\src\Asteroids.cpp" />
     <ClCompile Include="..\..\src\Bullet.cpp" />
     <ClCompile Include="..\..\src\main.cpp" />
     <ClCompile Include="..\..\src\Spaceship.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\SRC\Asteroid.h" />
     <ClInclude Include="..\..\src\Asteroids.h" />
+    <ClInclude Include="..\..\SRC\BoundingSphere.h" />
     <ClInclude Include="..\..\src\Bullet.h" />
     <ClInclude Include="..\..\src\Spaceship.h" />
   </ItemGroup>
