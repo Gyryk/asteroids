@@ -9,6 +9,9 @@
 #include "Spaceship.h"
 #include "BoundingShape.h"
 #include "BoundingSphere.h"
+#include "GUILabel.h"
+#include "IPlayerListener.h" 
+#include "Player.h" 
 
 // PUBLIC INSTANCE CONSTRUCTORS ///////////////////////////////////////////////
 
@@ -36,12 +39,26 @@ void Asteroids::Start()
 	// Add this class as a listener of the game world
 	mGameWorld->AddListener(thisPtr.get());
 
+	// Add a player (watcher) to the game world 
+	mGameWorld->AddListener(&mPlayer);
+	// Add this class as a listener of the player 
+	mPlayer.AddListener(thisPtr);
+
+	// Add a score keeper to the game world 
+	mGameWorld->AddListener(&mScoreKeeper);
+	// Add this class as a listener of the score keeper 
+	mScoreKeeper.AddListener(thisPtr);
+
+
 	// Add this as a listener to the world and the keyboard
 	mGameWindow->AddKeyboardListener(thisPtr);
 	// Create a spaceship and add it to the world
 	mGameWorld->AddObject(CreateSpaceship());
 	// Create some asteroids and add them to the world
 	CreateAsteroids(10);
+
+	//Create the GUI
+	CreateGUI();
 
 	// Start the game
 	GameSession::Start();
@@ -125,6 +142,16 @@ void Asteroids::OnTimer(int value)
 
 }
 
+void Asteroids::OnPlayerKilled(int lives_left)
+{
+	// Format the lives left message using an string-based stream 
+	std::ostringstream msg_stream;
+	msg_stream << "Lives: " << lives_left;
+	// Get the lives left message as a string 
+	std::string lives_msg = msg_stream.str();
+	mLivesLabel->SetText(lives_msg);
+}
+
 // PROTECTED INSTANCE METHODS /////////////////////////////////////////////////
 shared_ptr<GameObject> Asteroids::CreateSpaceship()
 {
@@ -155,3 +182,24 @@ void Asteroids::CreateAsteroids(const uint num_asteroids)
 	}
 }
 
+void Asteroids::CreateGUI()
+{
+	// Add a (transparent) border around the edge of the game display 
+	mGameDisplay->GetContainer()->SetBorder(GLVector2i(10, 10));
+	// Create a new GUILabel and wrap it up in a shared_ptr 
+	mScoreLabel = make_shared<GUILabel>("Score: 0");
+	// Set the vertical alignment of the label to GUI_VALIGN_TOP 
+	mScoreLabel->SetVerticalAlignment(GUIComponent::GUI_VALIGN_TOP);
+	// Add the GUILabel to the GUIComponent 
+	shared_ptr<GUIComponent> score_component
+		= static_pointer_cast<GUIComponent>(mScoreLabel);
+	mGameDisplay->GetContainer()->AddComponent(score_component, GLVector2f(0.0f, 1.0f));
+
+	// Create a new GUILabel and wrap it up in a shared_ptr 
+	mLivesLabel = make_shared<GUILabel>("Lives: 3");
+	// Set the vertical alignment of the label to GUI_VALIGN_BOTTOM 
+	mLivesLabel->SetVerticalAlignment(GUIComponent::GUI_VALIGN_BOTTOM);
+	// Add the GUILabel to the GUIComponent
+	shared_ptr<GUIComponent> lives_component = static_pointer_cast<GUIComponent>(mLivesLabel);
+	mGameDisplay->GetContainer()->AddComponent(lives_component, GLVector2f(0.0f, 0.0f));
+}

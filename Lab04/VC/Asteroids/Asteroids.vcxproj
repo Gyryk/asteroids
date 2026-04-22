@@ -113,6 +113,10 @@
     <ClInclude Include="..\..\SRC\Asteroid.h" />
     <ClInclude Include="..\..\src\Asteroids.h" />
     <ClInclude Include="..\..\src\Bullet.h" />
+    <ClInclude Include="..\..\SRC\IPlayerListener.h" />
+    <ClInclude Include="..\..\SRC\IScoreListener.h" />
+    <ClInclude Include="..\..\SRC\Player.h" />
+    <ClInclude Include="..\..\SRC\ScoreKeeper.h" />
     <ClInclude Include="..\..\src\Spaceship.h" />
   </ItemGroup>
   <ItemGroup>
