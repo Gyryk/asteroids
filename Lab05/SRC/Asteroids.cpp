@@ -10,6 +10,7 @@
 #include "BoundingShape.h"
 #include "BoundingSphere.h"
 #include "GUILabel.h"
+#include "Explosion.h"
 
 // PUBLIC INSTANCE CONSTRUCTORS ///////////////////////////////////////////////
 
@@ -45,6 +46,20 @@ void Asteroids::Start()
 
 	// Add this class as a listener of the score keeper
 	mScoreKeeper.AddListener(thisPtr);
+
+	// Create an ambient light to show sprite textures
+	GLfloat ambient_light[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+	GLfloat diffuse_light[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+	glLightfv(GL_LIGHT0, GL_AMBIENT, ambient_light);
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse_light);
+	glEnable(GL_LIGHT0);
+	Animation* explosion_anim
+		= AnimationManager::GetInstance().CreateAnimationFromFile("explosion", 64, 1024,
+			64, 64, "explosion_fs.png");
+	Animation* asteroid1_anim = AnimationManager::GetInstance().CreateAnimationFromFile("asteroid1",
+		128, 8192, 128, 128, "asteroid1_fs.png");
+	Animation* spaceship_anim = AnimationManager::GetInstance().CreateAnimationFromFile("spaceship",
+		128, 128, 128, 128, "spaceship_fs.png");
 
 	// Create a spaceship and add it to the world
 	mGameWorld->AddObject(CreateSpaceship());
@@ -122,6 +137,20 @@ void Asteroids::OnSpecialKeyReleased(int key, int x, int y)
 
 void Asteroids::OnObjectRemoved(GameWorld* world, shared_ptr<GameObject> object)
 {
+	if (object->GetType() == GameObjectType("Asteroid"))
+	{
+		shared_ptr<GameObject> explosion = CreateExplosion();
+		explosion->SetPosition(object->GetPosition());
+		explosion->SetRotation(object->GetRotation());
+		mGameWorld->AddObject(explosion);
+
+		mAsteroidCount--;
+		if (mAsteroidCount <= 0)
+		{
+			SetTimer(500, START_NEXT_LEVEL);
+		}
+	}
+
 }
 
 // PUBLIC INSTANCE METHODS IMPLEMENTING ITimerListener ////////////////////////
@@ -138,8 +167,17 @@ void Asteroids::OnTimer(int value)
 	{
 		mLevel++;
 		int num_asteroids = 10 + 2 * mLevel;
+		CreateAsteroids(num_asteroids);
 	}
-
+	if (value == CREATE_NEW_PLAYER)
+	{
+		mSpaceship->Reset();
+		mGameWorld->AddObject(mSpaceship);
+	}
+	if (value == SHOW_GAME_OVER)
+	{
+		mGameOverLabel->SetVisible(true);
+	}
 }
 
 // PROTECTED INSTANCE METHODS /////////////////////////////////////////////////
@@ -149,12 +187,13 @@ shared_ptr<GameObject> Asteroids::CreateSpaceship()
 	// shared_ptrs of different types because GameWorld implements IRefCount
 	mSpaceship = make_shared<Spaceship>();
 	mSpaceship->SetBoundingShape(make_shared<BoundingSphere>(mSpaceship->GetThisPtr(), 4.0f));
-	shared_ptr<Shape> spaceship_shape = make_shared<Shape>("spaceship.shape");
-	shared_ptr<Shape> thruster_shape = make_shared<Shape>("thruster.shape");
 	shared_ptr<Shape> bullet_shape = make_shared<Shape>("bullet.shape");
-	mSpaceship->SetSpaceshipShape(spaceship_shape);
-	mSpaceship->SetThrusterShape(thruster_shape);
 	mSpaceship->SetBulletShape(bullet_shape);
+	Animation* anim_ptr = AnimationManager::GetInstance().GetAnimationByName("spaceship");
+	shared_ptr<Sprite> spaceship_sprite =
+		make_shared<Sprite>(anim_ptr->GetWidth(), anim_ptr->GetHeight(), anim_ptr);
+	mSpaceship->SetSprite(spaceship_sprite);
+	mSpaceship->SetScale(0.1f);
 
 	// Reset spaceship back to centre of the world
 	mSpaceship->Reset();
@@ -164,11 +203,17 @@ shared_ptr<GameObject> Asteroids::CreateSpaceship()
 
 void Asteroids::CreateAsteroids(const uint num_asteroids)
 {
-	shared_ptr<Shape> asteroid_shape = make_shared<Shape>("asteroid.shape");
-	for (uint i = 0; i < num_asteroids; i++) {
+	mAsteroidCount = num_asteroids;
+	for (uint i = 0; i < num_asteroids; i++)
+	{
+		Animation* anim_ptr = AnimationManager::GetInstance().GetAnimationByName("asteroid1");
+		shared_ptr<Sprite> asteroid_sprite
+			= make_shared<Sprite>(anim_ptr->GetWidth(), anim_ptr->GetHeight(), anim_ptr);
+		asteroid_sprite->SetLoopAnimation(true);
 		shared_ptr<GameObject> asteroid = make_shared<Asteroid>();
 		asteroid->SetBoundingShape(make_shared<BoundingSphere>(asteroid->GetThisPtr(), 10.0f));
-		asteroid->SetShape(asteroid_shape);
+		asteroid->SetSprite(asteroid_sprite);
+		asteroid->SetScale(0.2f);
 		mGameWorld->AddObject(asteroid);
 	}
 }
@@ -193,6 +238,19 @@ void Asteroids::CreateGUI()
 	// Add the GUILabel to the GUIComponent  
 	shared_ptr<GUIComponent> lives_component = static_pointer_cast<GUIComponent>(mLivesLabel);
 	mGameDisplay->GetContainer()->AddComponent(lives_component, GLVector2f(0.0f, 0.0f));
+
+	// Create a new GUILabel and wrap it up in a shared_ptr
+	mGameOverLabel = shared_ptr<GUILabel>(new GUILabel("GAME OVER"));
+	// Set the horizontal alignment of the label to GUI_HALIGN_CENTER
+	mGameOverLabel->SetHorizontalAlignment(GUIComponent::GUI_HALIGN_CENTER);
+	// Set the vertical alignment of the label to GUI_VALIGN_MIDDLE
+	mGameOverLabel->SetVerticalAlignment(GUIComponent::GUI_VALIGN_MIDDLE);
+	// Set the visibility of the label to false (hidden)
+	mGameOverLabel->SetVisible(false);
+	// Add the GUILabel to the GUIContainer
+	shared_ptr<GUIComponent> game_over_component
+		= static_pointer_cast<GUIComponent>(mGameOverLabel);
+	mGameDisplay->GetContainer()->AddComponent(game_over_component, GLVector2f(0.5f, 0.5f));
 }
 
 void Asteroids::OnScoreChanged(int score)
@@ -207,13 +265,32 @@ void Asteroids::OnScoreChanged(int score)
 
 void Asteroids::OnPlayerKilled(int lives_left)
 {
+	shared_ptr<GameObject> explosion = CreateExplosion();
+	explosion->SetPosition(mSpaceship->GetPosition());
+	explosion->SetRotation(mSpaceship->GetRotation());
+	mGameWorld->AddObject(explosion);
+
 	// Format the lives left message using an string-based stream
 	std::ostringstream msg_stream;
 	msg_stream << "Lives: " << lives_left;
 	// Get the lives left message as a string
 	std::string lives_msg = msg_stream.str();
 	mLivesLabel->SetText(lives_msg);
+
+	if (lives_left > 0) { SetTimer(1000, CREATE_NEW_PLAYER); }
+	else {
+		SetTimer(500, SHOW_GAME_OVER);
+	}
 }
 
-
-
+shared_ptr<GameObject> Asteroids::CreateExplosion()
+{
+	Animation* anim_ptr = AnimationManager::GetInstance().GetAnimationByName("explosion");
+	shared_ptr<Sprite> explosion_sprite =
+		make_shared<Sprite>(anim_ptr->GetWidth(), anim_ptr->GetHeight(), anim_ptr);
+	explosion_sprite->SetLoopAnimation(false);
+	shared_ptr<GameObject> explosion = make_shared<Explosion>();
+	explosion->SetSprite(explosion_sprite);
+	explosion->Reset();
+	return explosion;
+}
