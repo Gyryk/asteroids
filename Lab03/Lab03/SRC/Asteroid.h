@@ -9,8 +9,6 @@ public:
 	Asteroid(void);
 	~Asteroid(void);
 
-	void Render(void);
-
 	bool CollisionTest(shared_ptr<GameObject> o);
 	void OnCollision(const GameObjectList& objects);
 };

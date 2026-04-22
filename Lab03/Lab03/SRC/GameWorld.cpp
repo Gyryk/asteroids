@@ -178,9 +178,9 @@ void GameWorld::UpdateCollisions(int t)
 			shared_ptr<GameObject> object2 = it2->first;
 			GameObjectList& collisions2 = it2->second;
 			if (object2 != object1) {
-				if (object1->CollisionTest(object2)) {
+				if ( object1->CollisionTest(object2)) {
 					collisions1.push_back(object2);
-					collisions2.push_back(object1);
+					// collisions2.push_back(object1);
 				}
 			}
 		}

@@ -1,1 +1,5 @@
-﻿
+﻿cl : command line  warning D9035: option 'Gm' has been deprecated and will be removed in a future release
+  GameObject.cpp
+  Shape.cpp
+  Generating Code...
+  Engine.vcxproj -> C:\Users\agraw\source\repos\Gyryk\asteroids\Lab03\Lab03\lib\Engine.lib

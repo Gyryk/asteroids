@@ -94,6 +94,7 @@ void GameObject::PreRender(void)
 /** Render debug graphics if required. */
 void GameObject::Render(void)
 {
+	if (mShape.get() != NULL) mShape->Render();
 	if (mSprite.get() != NULL) mSprite->Render();
 }
 

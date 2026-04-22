@@ -13,7 +13,6 @@ public:
 	virtual ~Bullet(void);
 
 	virtual void Update(int t);
-	virtual void Render(void);
 
 	void SetTimeToLive(int ttl) { mTimeToLive = ttl; }
 	int GetTimeToLive(void) { return mTimeToLive; }

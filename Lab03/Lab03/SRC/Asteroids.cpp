@@ -130,6 +130,14 @@ shared_ptr<GameObject> Asteroids::CreateSpaceship()
 	// Create a raw pointer to a spaceship that can be converted to
 	// shared_ptrs of different types because GameWorld implements IRefCount
 	mSpaceship = make_shared<Spaceship>();
+	mSpaceship->SetBoundingShape(make_shared<BoundingSphere>(mSpaceship->GetThisPtr(), 4.0f));
+	shared_ptr<Shape> spaceship_shape = make_shared<Shape>("spaceship.shape");
+	shared_ptr<Shape> thruster_shape = make_shared<Shape>("thruster.shape");
+	shared_ptr<Shape> bullet_shape = make_shared<Shape>("bullet.shape");
+	mSpaceship->SetSpaceshipShape(spaceship_shape);
+	mSpaceship->SetThrusterShape(thruster_shape);
+	mSpaceship->SetBulletShape(bullet_shape);
+
 
 	// Reset spaceship back to centre of the world
 	mSpaceship->Reset();
@@ -139,10 +147,15 @@ shared_ptr<GameObject> Asteroids::CreateSpaceship()
 
 void Asteroids::CreateAsteroids(const uint num_asteroids)
 {
+	shared_ptr<Shape> asteroid_shape = make_shared<Shape>("asteroid.shape");
+
 	for (uint i = 0; i < num_asteroids; i++) {
 		shared_ptr<GameObject> asteroid = make_shared<Asteroid>();
 		asteroid->SetBoundingShape(make_shared<BoundingSphere>(asteroid->GetThisPtr(), 10.0f));
+		asteroid->SetShape(asteroid_shape);
+
 		mGameWorld->AddObject(asteroid);
+
 	}
 }
 

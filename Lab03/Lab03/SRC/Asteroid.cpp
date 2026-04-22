@@ -19,29 +19,6 @@ Asteroid::~Asteroid(void)
 {
 }
 
-void Asteroid::Render(void)
-{
-	// Disable lighting for solid colour lines
-	glDisable(GL_LIGHTING);
-	// Start drawing lines
-	glBegin(GL_LINE_LOOP);
-	// Set colour to grey
-	glColor3f(0.6, 0.6, 0.6);
-	// Add vertices to draw an octagon
-	glVertex3f(-7, -7, 0.0);
-	glVertex3f(-10, 0, 0.0);
-	glVertex3f(-7, 7, 0.0);
-	glVertex3f(0, 10, 0.0);
-	glVertex3f(7, 7, 0.0);
-	glVertex3f(10, 0, 0.0);
-	glVertex3f(7, -7, 0.0);
-	glVertex3f(0, -10, 0.0);
-	// Finish drawing lines
-	glEnd();
-	// Enable lighting
-	glEnable(GL_LIGHTING);
-}
-
 bool Asteroid::CollisionTest(shared_ptr<GameObject> o)
 {
 	if (GetType() == o->GetType()) return false;

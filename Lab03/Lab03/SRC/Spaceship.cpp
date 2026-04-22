@@ -43,36 +43,14 @@ void Spaceship::Update(int t)
 /** Render this spaceship. */
 void Spaceship::Render(void)
 {
-	// Disable lighting to get solid lines
-	glDisable(GL_LIGHTING);
-	// Set pen colour to very light grey
-	glColor3f(0.8, 0.8, 0.8);
-	// Start drawing closed shape
-	glBegin(GL_LINE_LOOP);
-		// Add vertices of ship's body
-		glVertex3f(-3,-2, 0);
-		glVertex3f( 4, 0, 0);
-		glVertex3f(-3, 2, 0);
-	// Finish drawing closed shape
-	glEnd();
+	if (mSpaceshipShape.get() != NULL) mSpaceshipShape->Render();
 
 	// If ship is thrusting
-	if (mThrust > 0)
+	if (mThrust > 0 && (mThrusterShape.get() != NULL))
 	{
-		// Start drawing open line
-		glBegin(GL_LINE_STRIP);
-		// Set pen colour to dark orange
-		glColor3f(0.8, 0.4, 0.1);
-		// Add vertices of ship's flame
-		glVertex3f(-2, -1, 0);
-		glVertex3f(-4, 0, 0);
-		glVertex3f(-2, 1, 0);
-		// Finish drawing open line
-		glEnd();
+		mThrusterShape->Render();
 	}
 
-	// Enable lighting
-	glEnable(GL_LIGHTING);
 	// Call base class to render debug graphics if required
 	GameObject::Render();
 }
@@ -109,7 +87,8 @@ void Spaceship::Shoot(void)
 	// Construct a new bullet
 	shared_ptr<GameObject> bullet
 		(new Bullet(bullet_position, bullet_velocity, mAcceleration, mAngle, 0, 2000));
-	bullet->SetBoundingShape(make_shared<BoundingSphere>(bullet->GetThisPtr(), 1.0f));
+	bullet->SetBoundingShape(make_shared<BoundingSphere>(bullet->GetThisPtr(), 2.0f));
+	bullet->SetShape(mBulletShape);
 	// Add the new bullet to the game world
 	mWorld->AddObject(bullet);
 
@@ -117,7 +96,10 @@ void Spaceship::Shoot(void)
 
 bool Spaceship::CollisionTest(shared_ptr<GameObject> o)
 {
-	return false;
+	if (o->GetType() != GameObjectType("Asteroid")) return false;
+	if (mBoundingShape.get() == NULL) return false;
+	if (o->GetBoundingShape().get() == NULL) return false;
+	return mBoundingShape->CollisionTest(o->GetBoundingShape());
 }
 
 void Spaceship::OnCollision(const GameObjectList &objects)
