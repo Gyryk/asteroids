@@ -11,6 +11,7 @@
 #include "BoundingSphere.h"
 #include "GUILabel.h"
 #include "Explosion.h"
+#include "PowerUp.h"
 
 // PUBLIC INSTANCE CONSTRUCTORS ///////////////////////////////////////////////
 
@@ -74,6 +75,7 @@ void Asteroids::Start()
 
 	// Start the game
 	GameSession::Start();
+	SetTimer(12000, SPAWN_POWERUP);
 }
 
 /** Stop the current game. */
@@ -109,6 +111,7 @@ void Asteroids::OnSpecialKeyPressed(int key, int x, int y)
 	case GLUT_KEY_LEFT: mSpaceship->Rotate(90); break;
 	// If right arrow key is pressed start rotating clockwise
 	case GLUT_KEY_RIGHT: mSpaceship->Rotate(-90); break;
+	case GLUT_KEY_DOWN: mSpaceship->ApplyBrake(); break;
 	// Default case - do nothing
 	default: break;
 	}
@@ -136,14 +139,43 @@ void Asteroids::OnObjectRemoved(GameWorld* world, shared_ptr<GameObject> object)
 {
 	if (object->GetType() == GameObjectType("Asteroid"))
 	{
+		shared_ptr<Asteroid> asteroid = dynamic_pointer_cast<Asteroid>(object);
 		shared_ptr<GameObject> explosion = CreateExplosion();
 		explosion->SetPosition(object->GetPosition());
 		explosion->SetRotation(object->GetRotation());
 		mGameWorld->AddObject(explosion);
 		mAsteroidCount--;
+		if (asteroid.get() != NULL && asteroid->GetSize() == Asteroid::LARGE && asteroid->WasDestroyedByBullet())
+		{
+			CreateSmallAsteroids(object->GetPosition(), object->GetVelocity());
+			mAsteroidCount += 2;
+		}
 		if (mAsteroidCount <= 0) 
 		{ 
 			SetTimer(500, START_NEXT_LEVEL); 
+		}
+	}
+
+	if (object->GetType() == GameObjectType("PowerUp"))
+	{
+		shared_ptr<PowerUp> powerup = dynamic_pointer_cast<PowerUp>(object);
+		if (powerup.get() != NULL && powerup->WasCollected())
+		{
+			if (powerup->GetPowerUpType() == PowerUp::EXTRA_LIFE)
+			{
+				mPlayer.AddLife();
+				std::ostringstream msg_stream;
+				msg_stream << "Lives: " << mPlayer.GetLives();
+				mLivesLabel->SetText(msg_stream.str());
+			}
+			else if (powerup->GetPowerUpType() == PowerUp::INVULNERABILITY)
+			{
+				mSpaceship->SetInvulnerableFor(8000);
+			}
+			else if (powerup->GetPowerUpType() == PowerUp::BRAKES)
+			{
+				mSpaceship->EnableBrakesFor(12000);
+			}
 		}
 	}
 }
@@ -168,6 +200,12 @@ void Asteroids::OnTimer(int value)
 	if (value == SHOW_GAME_OVER)
 	{
 		mGameOverLabel->SetVisible(true);
+	}
+
+	if (value == SPAWN_POWERUP)
+	{
+		SpawnPowerUp();
+		SetTimer(12000, SPAWN_POWERUP);
 	}
 
 }
@@ -208,6 +246,38 @@ void Asteroids::CreateAsteroids(const uint num_asteroids)
 		asteroid->SetScale(0.2f);
 		mGameWorld->AddObject(asteroid);
 	}
+}
+
+void Asteroids::CreateSmallAsteroids(const GLVector3f& origin, const GLVector3f& inherited_velocity)
+{
+	for (int i = 0; i < 2; ++i)
+	{
+		Animation *anim_ptr = AnimationManager::GetInstance().GetAnimationByName("asteroid1");
+		shared_ptr<Sprite> asteroid_sprite =
+			make_shared<Sprite>(anim_ptr->GetWidth(), anim_ptr->GetHeight(), anim_ptr);
+		asteroid_sprite->SetLoopAnimation(true);
+		shared_ptr<Asteroid> asteroid = make_shared<Asteroid>(Asteroid::SMALL);
+		asteroid->SetBoundingShape(make_shared<BoundingSphere>(asteroid->GetThisPtr(), 5.0f));
+		asteroid->SetSprite(asteroid_sprite);
+		asteroid->SetScale(0.12f);
+		asteroid->SetPosition(origin);
+		GLVector3f spread((i == 0) ? 8.0f : -8.0f, (i == 0) ? -8.0f : 8.0f, 0.0f);
+		asteroid->SetVelocity(inherited_velocity + spread);
+		mGameWorld->AddObject(asteroid);
+	}
+}
+
+void Asteroids::SpawnPowerUp()
+{
+	PowerUp::PowerUpType random_type = static_cast<PowerUp::PowerUpType>(rand() % 3);
+	shared_ptr<PowerUp> powerup = make_shared<PowerUp>(random_type, 9000);
+	powerup->SetBoundingShape(make_shared<BoundingSphere>(powerup->GetThisPtr(), 4.0f));
+	Animation *anim_ptr = AnimationManager::GetInstance().GetAnimationByName("explosion");
+	shared_ptr<Sprite> powerup_sprite = make_shared<Sprite>(anim_ptr->GetWidth(), anim_ptr->GetHeight(), anim_ptr);
+	powerup_sprite->SetLoopAnimation(true);
+	powerup->SetSprite(powerup_sprite);
+	powerup->SetScale(0.06f);
+	mGameWorld->AddObject(powerup);
 }
 
 void Asteroids::CreateGUI()
@@ -291,7 +361,6 @@ shared_ptr<GameObject> Asteroids::CreateExplosion()
 	explosion->Reset();
 	return explosion;
 }
-
 
 
 

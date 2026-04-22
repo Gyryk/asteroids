@@ -6,11 +6,29 @@
 class Asteroid : public GameObject
 {
 public:
+	enum AsteroidSize
+	{
+		LARGE = 0,
+		SMALL = 1
+	};
+
 	Asteroid(void);
+	Asteroid(AsteroidSize size);
 	~Asteroid(void);
 
 	bool CollisionTest(shared_ptr<GameObject> o);
 	void OnCollision(const GameObjectList& objects);
+
+	AsteroidSize GetSize() const { return mSize; }
+	void SetSize(AsteroidSize size) { mSize = size; }
+	bool WasDestroyedByBullet() const { return mDestroyedByBullet; }
+	int GetScoreValue() const;
+
+private:
+	AsteroidSize mSize;
+	bool mDestroyedByBullet;
+
+	void Bounce(shared_ptr<GameObject> o);
 };
 
 #endif

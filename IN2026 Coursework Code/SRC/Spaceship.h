@@ -19,6 +19,11 @@ public:
 	virtual void Thrust(float t);
 	virtual void Rotate(float r);
 	virtual void Shoot(void);
+	virtual void ApplyBrake(void);
+	void SetInvulnerableFor(int ms);
+	void EnableBrakesFor(int ms);
+	bool IsInvulnerable() const { return mInvulnerableTimeLeft > 0; }
+	bool HasBrakes() const { return mBrakeUpgradeTimeLeft > 0; }
 
 	void SetSpaceshipShape(shared_ptr<Shape> spaceship_shape) { mSpaceshipShape = spaceship_shape; }
 	void SetThrusterShape(shared_ptr<Shape> thruster_shape) { mThrusterShape = thruster_shape; }
@@ -29,6 +34,8 @@ public:
 
 private:
 	float mThrust;
+	int mInvulnerableTimeLeft;
+	int mBrakeUpgradeTimeLeft;
 
 	shared_ptr<Shape> mSpaceshipShape;
 	shared_ptr<Shape> mThrusterShape;
