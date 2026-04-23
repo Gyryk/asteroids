@@ -14,6 +14,8 @@ class GameObject;
 class Spaceship;
 class GUILabel;
 class Bonus;
+class GUIIcon;
+class Image;
 
 class Asteroids : public GameSession, public IKeyboardListener, public IGameWorldListener, public IScoreListener, public IPlayerListener
 {
@@ -49,10 +51,18 @@ public:
 	void OnTimer(int value);
 
 private:
+	enum BonusState
+	{
+		HELD_NONE = 0,
+		HELD_INVULNERABILITY = 1,
+		HELD_NUKE = 2
+	};
 	shared_ptr<Spaceship> mSpaceship;
 	shared_ptr<GUILabel> mScoreLabel;
 	shared_ptr<GUILabel> mLivesLabel;
 	shared_ptr<GUILabel> mGameOverLabel;
+	shared_ptr<GUILabel> mInvulnerabilityLabel;
+	shared_ptr<GUIIcon> mBonusHeldIcon;
 
 	uint mLevel;
 	uint mAsteroidCount;
@@ -63,14 +73,20 @@ private:
 	void CreateAsteroids(const uint num_asteroids);
 	void CreateSmallAsteroids(const GLVector3f& origin, const GLVector3f& inherited_velocity);
 	void SpawnBonus(const GLVector3f& position);
+	void ActivateNuke();
+	void UpdateBonusHeldIcon();
 	shared_ptr<GameObject> CreateExplosion();
 	
 	const static uint SHOW_GAME_OVER = 0;
 	const static uint START_NEXT_LEVEL = 1;
 	const static uint CREATE_NEW_PLAYER = 2;
+	const static uint HIDE_INVULNERABILITY_TEXT = 3;
 
 	ScoreKeeper mScoreKeeper;
 	Player mPlayer;
+	BonusState mBonusHeld;
+	Image* mShieldImage;
+	Image* mNukeImage;
 };
 
 #endif

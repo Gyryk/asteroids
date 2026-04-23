@@ -14,7 +14,7 @@ public:
 		NUKE = 2
 	};
 
-	Bonus(BonusType type, int ttl_ms = 10000);
+	Bonus(BonusType type, int ttl_ms = 70000);
 	virtual ~Bonus(void);
 
 	virtual void Update(int t);

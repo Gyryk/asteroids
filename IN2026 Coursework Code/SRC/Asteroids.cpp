@@ -10,8 +10,10 @@
 #include "BoundingShape.h"
 #include "BoundingSphere.h"
 #include "GUILabel.h"
+#include "GUIIcon.h"
 #include "Explosion.h"
 #include "Bonus.h"
+#include "ImageManager.h"
 
 // PUBLIC INSTANCE CONSTRUCTORS ///////////////////////////////////////////////
 
@@ -21,6 +23,9 @@ Asteroids::Asteroids(int argc, char *argv[])
 {
 	mLevel = 0;
 	mAsteroidCount = 0;
+	mBonusHeld = HELD_NONE;
+	mShieldImage = NULL;
+	mNukeImage = NULL;
 }
 
 /** Destructor. */
@@ -60,6 +65,11 @@ void Asteroids::Start()
 	Animation *asteroid2_anim = AnimationManager::GetInstance().CreateAnimationFromFile("asteroid2", 128, 8192, 128, 128, "asteroid2_fs.png");
 	Animation *asteroid3_anim = AnimationManager::GetInstance().CreateAnimationFromFile("asteroid3", 64, 4096, 64, 64, "asteroid3_fs.png");
 	Animation *spaceship_anim = AnimationManager::GetInstance().CreateAnimationFromFile("spaceship", 128, 128, 128, 128, "spaceship_fs.png");
+	Animation* life_anim = AnimationManager::GetInstance().CreateAnimationFromFile("life_powerup", 512, 512, 512, 512, "life.png");
+	Animation* shield_anim = AnimationManager::GetInstance().CreateAnimationFromFile("shield_powerup", 512, 512, 512, 512, "shield.png");
+	Animation* nuke_anim = AnimationManager::GetInstance().CreateAnimationFromFile("nuke_powerup", 512, 512, 512, 512, "nuke.png");
+	mShieldImage = ImageManager::GetInstance().CreateImageFromFile("shield_icon", 512, 512, "shield.png");
+	mNukeImage = ImageManager::GetInstance().CreateImageFromFile("nuke_icon", 512, 512, "nuke.png");
 
 	// Create a spaceship and add it to the world
 	mGameWorld->AddObject(CreateSpaceship());
@@ -94,6 +104,24 @@ void Asteroids::OnKeyPressed(uchar key, int x, int y)
 	{
 	case ' ':
 		mSpaceship->Shoot();
+		break;
+	case 'c':
+	case 'C':
+		if (mBonusHeld == HELD_INVULNERABILITY)
+		{
+			mSpaceship->SetInvulnerableFor(5000);
+			mBonusHeld = HELD_NONE;
+			UpdateBonusHeldIcon();
+			// Show text for invulnerability timer. WIP
+			// mInvulnerabilityLabel->SetVisible(true);
+			// SetTimer(5000, HIDE_INVULNERABILITY_TEXT);
+		}
+		else if (mBonusHeld == HELD_NUKE)
+		{
+			ActivateNuke();
+			mBonusHeld = HELD_NONE;
+			UpdateBonusHeldIcon();
+		}
 		break;
 	default:
 		break;
@@ -155,7 +183,7 @@ void Asteroids::OnObjectRemoved(GameWorld* world, shared_ptr<GameObject> object)
 				mAsteroidCount += 2;
 			}
 
-			bool drop_bonus = (rand() % 100) < 20; // 20% chance of dropping a bonus
+			bool drop_bonus = (rand() % 100) < 99; // 20% chance of dropping a bonus
 			if (drop_bonus)
 			{
 				SpawnBonus(object->GetPosition());
@@ -166,7 +194,7 @@ void Asteroids::OnObjectRemoved(GameWorld* world, shared_ptr<GameObject> object)
 			SetTimer(500, START_NEXT_LEVEL); 
 		}
 	}
-
+	
 	if (object->GetType() == GameObjectType("Bonus"))
 	{
 		shared_ptr<Bonus> bonus = dynamic_pointer_cast<Bonus>(object);
@@ -181,11 +209,19 @@ void Asteroids::OnObjectRemoved(GameWorld* world, shared_ptr<GameObject> object)
 			}
 			else if (bonus->GetBonusType() == Bonus::INVULNERABILITY)
 			{
-				mSpaceship->SetInvulnerableFor(5000);
+				if (mBonusHeld == HELD_NONE)
+				{
+					mBonusHeld = HELD_INVULNERABILITY;
+					UpdateBonusHeldIcon();
+				}
 			}
 			else if (bonus->GetBonusType() == Bonus::NUKE)
 			{
-				// mSpaceship->EnableBrakesFor(12000);
+				if (mBonusHeld == HELD_NONE)
+				{
+					mBonusHeld = HELD_NUKE;
+					UpdateBonusHeldIcon();
+				}
 			}
 		}
 	}
@@ -214,6 +250,10 @@ void Asteroids::OnTimer(int value)
 		mGameOverLabel->SetVisible(true);
 	}
 
+	if (value == HIDE_INVULNERABILITY_TEXT)
+	{
+		mInvulnerabilityLabel->SetVisible(false);
+	}
 }
 
 // PROTECTED INSTANCE METHODS /////////////////////////////////////////////////
@@ -308,6 +348,21 @@ void Asteroids::CreateGUI()
 		= static_pointer_cast<GUIComponent>(mGameOverLabel);
 	mGameDisplay->GetContainer()->AddComponent(game_over_component, GLVector2f(0.5f, 0.5f));
 
+	mBonusHeldIcon = make_shared<GUIIcon>();
+	mBonusHeldIcon->SetHorizontalAlignment(GUIComponent::GUI_HALIGN_RIGHT);
+	mBonusHeldIcon->SetVerticalAlignment(GUIComponent::GUI_VALIGN_BOTTOM);
+	mBonusHeldIcon->SetVisible(false);
+	mBonusHeldIcon->SetSize(GLVector2i(32, 32));
+	shared_ptr<GUIComponent> held_bonus_component
+		= static_pointer_cast<GUIComponent>(mBonusHeldIcon);
+	mGameDisplay->GetContainer()->AddComponent(held_bonus_component, GLVector2f(1.0f, 0.0f));
+
+	mInvulnerabilityLabel = make_shared<GUILabel>("Invulnerability: 5000");
+	mInvulnerabilityLabel->SetVerticalAlignment(GUIComponent::GUI_VALIGN_TOP);
+	mInvulnerabilityLabel->SetHorizontalAlignment(GUIComponent::GUI_HALIGN_RIGHT);
+	mInvulnerabilityLabel->SetVisible(false);
+	shared_ptr<GUIComponent> invulnerability_component = static_pointer_cast<GUIComponent>(mInvulnerabilityLabel);
+	mGameDisplay->GetContainer()->AddComponent(invulnerability_component, GLVector2f(1.0f, 1.0f));
 }
 
 void Asteroids::OnScoreChanged(int score)
@@ -374,12 +429,51 @@ void Asteroids::SpawnBonus(const GLVector3f& position)
 	}
 
 	shared_ptr<Bonus> bonus = make_shared<Bonus>(random_type, 70000);
-	bonus->SetBoundingShape(make_shared<BoundingSphere>(bonus->GetThisPtr(), 4.0f));
-	Animation* anim_ptr = AnimationManager::GetInstance().GetAnimationByName("explosion");
+	bonus->SetBoundingShape(make_shared<BoundingSphere>(bonus->GetThisPtr(), 8.0f));
+	string animation_name = "life_powerup";
+	if (random_type == Bonus::INVULNERABILITY) animation_name = "shield_powerup";
+	if (random_type == Bonus::NUKE) animation_name = "nuke_powerup";
+	Animation* anim_ptr = AnimationManager::GetInstance().GetAnimationByName(animation_name);
 	shared_ptr<Sprite> bonus_sprite = make_shared<Sprite>(anim_ptr->GetWidth(), anim_ptr->GetHeight(), anim_ptr);
 	bonus_sprite->SetLoopAnimation(true);
 	bonus->SetSprite(bonus_sprite);
-	bonus->SetScale(0.06f);
+	bonus->SetScale(-0.03f);
 	bonus->SetPosition(position);
 	mGameWorld->AddObject(bonus);
+}
+
+void Asteroids::ActivateNuke()
+{
+	GameObjectList objects = mGameWorld->GetGameObjects();
+	for (GameObjectList::iterator it = objects.begin(); it != objects.end(); ++it)
+	{
+		if ((*it)->GetType() == GameObjectType("Asteroid"))
+		{
+			shared_ptr<Asteroid> asteroid = dynamic_pointer_cast<Asteroid>(*it);
+			if (asteroid.get() != NULL)
+			{
+				asteroid->SetDestroyedByBullet(true);
+			}
+			mGameWorld->FlagForRemoval(*it);
+		}
+	}
+}
+
+void Asteroids::UpdateBonusHeldIcon()
+{
+	if (mBonusHeldIcon.get() == NULL) return;
+	if (mBonusHeld == HELD_INVULNERABILITY)
+	{
+		mBonusHeldIcon->SetImage(mShieldImage);
+		mBonusHeldIcon->SetVisible(true);
+	}
+	else if (mBonusHeld == HELD_NUKE)
+	{
+		mBonusHeldIcon->SetImage(mNukeImage);
+		mBonusHeldIcon->SetVisible(true);
+	}
+	else
+	{
+		mBonusHeldIcon->SetVisible(false);
+	}
 }

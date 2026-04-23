@@ -47,6 +47,7 @@ public:
 	int GetHeight() { return mHeight; }
 
 	void WrapXY(float &x, float &y);
+	GameObjectList GetGameObjects() const { return mGameObjects; }
 
 protected:
 	void UpdateObjects(int t);
