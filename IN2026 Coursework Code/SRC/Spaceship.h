@@ -20,6 +20,9 @@ public:
 	virtual void Rotate(float r);
 	virtual void Shoot(void);
 
+	void SetInvulnerableFor(int ms);
+	bool IsInvulnerable() const { return mInvulnerableTimeLeft > 0; }
+
 	void SetSpaceshipShape(shared_ptr<Shape> spaceship_shape) { mSpaceshipShape = spaceship_shape; }
 	void SetThrusterShape(shared_ptr<Shape> thruster_shape) { mThrusterShape = thruster_shape; }
 	void SetBulletShape(shared_ptr<Shape> bullet_shape) { mBulletShape = bullet_shape; }
@@ -28,6 +31,8 @@ public:
 	void OnCollision(const GameObjectList &objects);
 
 private:
+	int mInvulnerableTimeLeft;
+
 	float mThrust;
 
 	shared_ptr<Shape> mSpaceshipShape;

@@ -3,6 +3,7 @@
 #include "Bullet.h"
 #include "Spaceship.h"
 #include "BoundingSphere.h"
+#include "GameObjectType.h"
 
 using namespace std;
 
@@ -10,19 +11,19 @@ using namespace std;
 
 /**  Default constructor. */
 Spaceship::Spaceship()
-	: GameObject("Spaceship"), mThrust(0)
+	: GameObject("Spaceship"), mThrust(0), mInvulnerableTimeLeft(0)
 {
 }
 
 /** Construct a spaceship with given position, velocity, acceleration, angle, and rotation. */
 Spaceship::Spaceship(GLVector3f p, GLVector3f v, GLVector3f a, GLfloat h, GLfloat r)
-	: GameObject("Spaceship", p, v, a, h, r), mThrust(0)
+	: GameObject("Spaceship", p, v, a, h, r), mThrust(0), mInvulnerableTimeLeft(0)
 {
 }
 
 /** Copy constructor. */
 Spaceship::Spaceship(const Spaceship& s)
-	: GameObject(s), mThrust(0)
+	: GameObject(s), mThrust(0), mInvulnerableTimeLeft(0)
 {
 }
 
@@ -36,6 +37,12 @@ Spaceship::~Spaceship(void)
 /** Update this spaceship. */
 void Spaceship::Update(int t)
 {
+	if (mInvulnerableTimeLeft > 0)
+	{
+		mInvulnerableTimeLeft -= t;
+		if (mInvulnerableTimeLeft < 0) mInvulnerableTimeLeft = 0;
+	}
+
 	// Call parent update function
 	GameObject::Update(t);
 }
@@ -102,5 +109,18 @@ bool Spaceship::CollisionTest(shared_ptr<GameObject> o)
 
 void Spaceship::OnCollision(const GameObjectList &objects)
 {
-	mWorld->FlagForRemoval(GetThisPtr());
+	for (GameObjectList::const_iterator it = objects.begin(); it != objects.end(); ++it)
+	{
+		if ((*it)->GetType() == GameObjectType("Asteroid"))
+		{
+			if (IsInvulnerable()) return;
+			mWorld->FlagForRemoval(GetThisPtr());
+			return;
+		}
+	}
+}
+
+void Spaceship::SetInvulnerableFor(int ms)
+{
+	mInvulnerableTimeLeft = ms;
 }
