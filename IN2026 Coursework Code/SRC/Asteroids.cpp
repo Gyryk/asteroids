@@ -136,11 +136,22 @@ void Asteroids::OnObjectRemoved(GameWorld* world, shared_ptr<GameObject> object)
 {
 	if (object->GetType() == GameObjectType("Asteroid"))
 	{
+		shared_ptr<Asteroid> asteroid = dynamic_pointer_cast<Asteroid>(object);
 		shared_ptr<GameObject> explosion = CreateExplosion();
 		explosion->SetPosition(object->GetPosition());
 		explosion->SetRotation(object->GetRotation());
 		mGameWorld->AddObject(explosion);
 		mAsteroidCount--;
+		if (asteroid.get() != NULL && asteroid->GetSize() == Asteroid::LARGE && asteroid->WasDestroyedByBullet())
+		{
+			bool should_split = (rand() % 100) < 40; // 40% chance of splitting into smaller asteroids
+			asteroid->SetSplitOnDestroy(should_split);
+			if (should_split)
+			{
+				CreateSmallAsteroids(object->GetPosition(), object->GetVelocity());
+				mAsteroidCount += 2;
+			}
+		}
 		if (mAsteroidCount <= 0) 
 		{ 
 			SetTimer(500, START_NEXT_LEVEL); 
@@ -161,7 +172,7 @@ void Asteroids::OnTimer(int value)
 	if (value == START_NEXT_LEVEL)
 	{
 		mLevel++;
-		int num_asteroids = 10 + 2 * mLevel;
+		int num_asteroids = 10 + 5 * mLevel;
 		CreateAsteroids(num_asteroids);
 	}
 
@@ -206,6 +217,25 @@ void Asteroids::CreateAsteroids(const uint num_asteroids)
 		asteroid->SetBoundingShape(make_shared<BoundingSphere>(asteroid->GetThisPtr(), 10.0f));
 		asteroid->SetSprite(asteroid_sprite);
 		asteroid->SetScale(0.2f);
+		mGameWorld->AddObject(asteroid);
+	}
+}
+
+void Asteroids::CreateSmallAsteroids(const GLVector3f& origin, const GLVector3f& inherited_velocity)
+{
+	for (int i = 0; i < 2; ++i)
+	{
+		Animation* anim_ptr = AnimationManager::GetInstance().GetAnimationByName("asteroid1");
+		shared_ptr<Sprite> asteroid_sprite =
+			make_shared<Sprite>(anim_ptr->GetWidth(), anim_ptr->GetHeight(), anim_ptr);
+		asteroid_sprite->SetLoopAnimation(true);
+		shared_ptr<Asteroid> asteroid = make_shared<Asteroid>(Asteroid::SMALL);
+		asteroid->SetBoundingShape(make_shared<BoundingSphere>(asteroid->GetThisPtr(), 5.0f));
+		asteroid->SetSprite(asteroid_sprite);
+		asteroid->SetScale(0.12f);
+		asteroid->SetPosition(origin);
+		GLVector3f spread((i == 0) ? 8.0f : -8.0f, (i == 0) ? -8.0f : 8.0f, 0.0f);
+		asteroid->SetVelocity(inherited_velocity + spread);
 		mGameWorld->AddObject(asteroid);
 	}
 }

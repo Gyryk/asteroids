@@ -23,11 +23,14 @@ public:
 	AsteroidSize GetSize() const { return mSize; }
 	void SetSize(AsteroidSize size) { mSize = size; }
 	bool WasDestroyedByBullet() const { return mDestroyedByBullet; }
+	void SetSplitOnDestroy(bool split_on_destroy) { mSplitOnDestroy = split_on_destroy; }
+	bool WasSplitOnDestroy() const { return mSplitOnDestroy; }
 	int GetScoreValue() const;
 
 private:
 	AsteroidSize mSize;
 	bool mDestroyedByBullet;
+	bool mSplitOnDestroy;
 
 	void Bounce(shared_ptr<GameObject> o);
 };

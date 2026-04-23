@@ -11,7 +11,7 @@ namespace
 	const float SMALL_BOUNCINESS = 1.0f;
 }
 
-Asteroid::Asteroid(void) : GameObject("Asteroid"), mSize(LARGE), mDestroyedByBullet(false)
+Asteroid::Asteroid(void) : GameObject("Asteroid"), mSize(LARGE), mDestroyedByBullet(false), mSplitOnDestroy(false)
 {
 	mAngle = rand() % 360;
 	mRotation = 0; // rand() % 90;
@@ -23,7 +23,7 @@ Asteroid::Asteroid(void) : GameObject("Asteroid"), mSize(LARGE), mDestroyedByBul
 	mVelocity.z = 0.0;
 }
 
-Asteroid::Asteroid(AsteroidSize size) : GameObject("Asteroid"), mSize(size), mDestroyedByBullet(false)
+Asteroid::Asteroid(AsteroidSize size) : GameObject("Asteroid"), mSize(size), mDestroyedByBullet(false), mSplitOnDestroy(false)
 {
 	mAngle = rand() % 360;
 	mRotation = 0;
@@ -82,7 +82,11 @@ void Asteroid::OnCollision(const GameObjectList& objects)
 
 int Asteroid::GetScoreValue() const
 {
-	return (mSize == LARGE) ? 20 : 50;
+	if (mSize == LARGE)
+	{
+		return mSplitOnDestroy ? 15 : 20;
+	}
+	return 10;
 }
 
 void Asteroid::Bounce(shared_ptr<GameObject> o)
