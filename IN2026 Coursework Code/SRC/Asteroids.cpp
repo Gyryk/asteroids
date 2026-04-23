@@ -11,6 +11,7 @@
 #include "BoundingSphere.h"
 #include "GUILabel.h"
 #include "Explosion.h"
+#include "Bonus.h"
 
 // PUBLIC INSTANCE CONSTRUCTORS ///////////////////////////////////////////////
 
@@ -151,10 +152,39 @@ void Asteroids::OnObjectRemoved(GameWorld* world, shared_ptr<GameObject> object)
 				CreateSmallAsteroids(object->GetPosition(), object->GetVelocity());
 				mAsteroidCount += 2;
 			}
+
+			bool drop_bonus = (rand() % 100) < 20; // 20% chance of dropping a bonus
+			if (drop_bonus)
+			{
+				SpawnBonus(object->GetPosition());
+			}
 		}
 		if (mAsteroidCount <= 0) 
 		{ 
 			SetTimer(500, START_NEXT_LEVEL); 
+		}
+	}
+
+	if (object->GetType() == GameObjectType("Bonus"))
+	{
+		shared_ptr<Bonus> bonus = dynamic_pointer_cast<Bonus>(object);
+		if (bonus.get() != NULL && bonus->WasCollected())
+		{
+			if (bonus->GetBonusType() == Bonus::EXTRA_LIFE)
+			{
+				mPlayer.AddLife();
+				std::ostringstream msg_stream;
+				msg_stream << "Lives: " << mPlayer.GetLives();
+				mLivesLabel->SetText(msg_stream.str());
+			}
+			else if (bonus->GetBonusType() == Bonus::INVULNERABILITY)
+			{
+				mSpaceship->SetInvulnerableFor(5000);
+			}
+			else if (bonus->GetBonusType() == Bonus::NUKE)
+			{
+				// mSpaceship->EnableBrakesFor(12000);
+			}
 		}
 	}
 }
@@ -174,6 +204,7 @@ void Asteroids::OnTimer(int value)
 		mLevel++;
 		int num_asteroids = 10 + 5 * mLevel;
 		CreateAsteroids(num_asteroids);
+		SpawnBonus(GLVector3f(0.0f, 0.0f, 0.0f));
 	}
 
 	if (value == SHOW_GAME_OVER)
@@ -322,6 +353,16 @@ shared_ptr<GameObject> Asteroids::CreateExplosion()
 	return explosion;
 }
 
-
-
-
+void Asteroids::SpawnBonus(const GLVector3f& position)
+{
+	Bonus::BonusType random_type = static_cast<Bonus::BonusType>(rand() % 3);
+	shared_ptr<Bonus> bonus = make_shared<Bonus>(random_type, 8000);
+	bonus->SetBoundingShape(make_shared<BoundingSphere>(bonus->GetThisPtr(), 4.0f));
+	Animation* anim_ptr = AnimationManager::GetInstance().GetAnimationByName("explosion");
+	shared_ptr<Sprite> bonus_sprite = make_shared<Sprite>(anim_ptr->GetWidth(), anim_ptr->GetHeight(), anim_ptr);
+	bonus_sprite->SetLoopAnimation(true);
+	bonus->SetSprite(bonus_sprite);
+	bonus->SetScale(0.06f);
+	bonus->SetPosition(position);
+	mGameWorld->AddObject(bonus);
+}

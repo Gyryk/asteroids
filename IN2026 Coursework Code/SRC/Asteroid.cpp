@@ -43,7 +43,7 @@ Asteroid::~Asteroid(void)
 bool Asteroid::CollisionTest(shared_ptr<GameObject> o)
 {
 	if (o->GetType() == GameObjectType("Explosion")) return false;
-	if (o->GetType() == GameObjectType("PowerUp")) return false;
+	if (o->GetType() == GameObjectType("Bonus")) return false;
 	if (mBoundingShape.get() == NULL) return false;
 	if (o->GetBoundingShape().get() == NULL) return false;
 	return mBoundingShape->CollisionTest(o->GetBoundingShape());
@@ -57,10 +57,10 @@ void Asteroid::OnCollision(const GameObjectList& objects)
 		if (other->GetType() == GameObjectType("Asteroid"))
 		{
 			// This prevents double processing
-			// if (GetThisPtr().get() < other.get())
-			// {
+			if (GetThisPtr().get() < other.get())
+			{
 				Bounce(other);
-			// }
+			}
 		}
 		else if (other->GetType() == GameObjectType("Bullet"))
 		{
