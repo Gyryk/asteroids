@@ -43,7 +43,7 @@ public:
 
 	// Declaration of IGameWorldListener interface //////////////////////////////
 
-	void OnWorldUpdated(GameWorld* world) {}
+	void OnWorldUpdated(GameWorld* world);
 	void OnObjectAdded(GameWorld* world, shared_ptr<GameObject> object) {}
 	void OnObjectRemoved(GameWorld* world, shared_ptr<GameObject> object);
 

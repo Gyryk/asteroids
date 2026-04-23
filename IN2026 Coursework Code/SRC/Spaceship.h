@@ -22,6 +22,7 @@ public:
 
 	void SetInvulnerableFor(int ms);
 	bool IsInvulnerable() const { return mInvulnerableTimeLeft > 0; }
+	int GetInvulnerableTimeRemaining() const { return mInvulnerableTimeLeft; }
 
 	void SetSpaceshipShape(shared_ptr<Shape> spaceship_shape) { mSpaceshipShape = spaceship_shape; }
 	void SetThrusterShape(shared_ptr<Shape> thruster_shape) { mThrusterShape = thruster_shape; }

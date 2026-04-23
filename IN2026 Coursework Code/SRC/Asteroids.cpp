@@ -68,8 +68,8 @@ void Asteroids::Start()
 	Animation* life_anim = AnimationManager::GetInstance().CreateAnimationFromFile("life_powerup", 512, 512, 512, 512, "life.png");
 	Animation* shield_anim = AnimationManager::GetInstance().CreateAnimationFromFile("shield_powerup", 512, 512, 512, 512, "shield.png");
 	Animation* nuke_anim = AnimationManager::GetInstance().CreateAnimationFromFile("nuke_powerup", 512, 512, 512, 512, "nuke.png");
-	mShieldImage = ImageManager::GetInstance().CreateImageFromFile("shield_icon", 512, 512, "shield.png");
-	mNukeImage = ImageManager::GetInstance().CreateImageFromFile("nuke_icon", 512, 512, "nuke.png");
+	mShieldImage = ImageManager::GetInstance().CreateImageFromFile("shield_icon", 64, 64, "shield_icon.png");
+	mNukeImage = ImageManager::GetInstance().CreateImageFromFile("nuke_icon", 64, 64, "nuke_icon.png");
 
 	// Create a spaceship and add it to the world
 	mGameWorld->AddObject(CreateSpaceship());
@@ -112,9 +112,6 @@ void Asteroids::OnKeyPressed(uchar key, int x, int y)
 			mSpaceship->SetInvulnerableFor(5000);
 			mBonusHeld = HELD_NONE;
 			UpdateBonusHeldIcon();
-			// Show text for invulnerability timer. WIP
-			// mInvulnerabilityLabel->SetVisible(true);
-			// SetTimer(5000, HIDE_INVULNERABILITY_TEXT);
 		}
 		else if (mBonusHeld == HELD_NUKE)
 		{
@@ -163,6 +160,24 @@ void Asteroids::OnSpecialKeyReleased(int key, int x, int y)
 
 // PUBLIC INSTANCE METHODS IMPLEMENTING IGameWorldListener ////////////////////
 
+void Asteroids::OnWorldUpdated(GameWorld* world)
+{
+	if (mSpaceship.get() == NULL || mInvulnerabilityLabel.get() == NULL) return;
+	if (mSpaceship->IsInvulnerable())
+	{
+		int time_left_ms = mSpaceship->GetInvulnerableTimeRemaining();
+		int time_left_sec = static_cast<int>(ceil(time_left_ms / 1000.0f));
+		std::ostringstream msg_stream;
+		msg_stream << "Shield: " << time_left_sec << "s";
+		mInvulnerabilityLabel->SetText(msg_stream.str());
+		mInvulnerabilityLabel->SetVisible(true);
+	}
+	else
+	{
+		mInvulnerabilityLabel->SetVisible(false);
+	}
+}
+
 void Asteroids::OnObjectRemoved(GameWorld* world, shared_ptr<GameObject> object)
 {
 	if (object->GetType() == GameObjectType("Asteroid"))
@@ -183,7 +198,7 @@ void Asteroids::OnObjectRemoved(GameWorld* world, shared_ptr<GameObject> object)
 				mAsteroidCount += 2;
 			}
 
-			bool drop_bonus = (rand() % 100) < 99; // 20% chance of dropping a bonus
+			bool drop_bonus = (rand() % 100) < 20; // 20% chance of dropping a bonus
 			if (drop_bonus)
 			{
 				SpawnBonus(object->GetPosition());
@@ -352,12 +367,12 @@ void Asteroids::CreateGUI()
 	mBonusHeldIcon->SetHorizontalAlignment(GUIComponent::GUI_HALIGN_RIGHT);
 	mBonusHeldIcon->SetVerticalAlignment(GUIComponent::GUI_VALIGN_BOTTOM);
 	mBonusHeldIcon->SetVisible(false);
-	mBonusHeldIcon->SetSize(GLVector2i(32, 32));
+	mBonusHeldIcon->SetBorder(GLVector2i(-64, 0));
 	shared_ptr<GUIComponent> held_bonus_component
 		= static_pointer_cast<GUIComponent>(mBonusHeldIcon);
 	mGameDisplay->GetContainer()->AddComponent(held_bonus_component, GLVector2f(1.0f, 0.0f));
 
-	mInvulnerabilityLabel = make_shared<GUILabel>("Invulnerability: 5000");
+	mInvulnerabilityLabel = make_shared<GUILabel>("Shield: 5000");
 	mInvulnerabilityLabel->SetVerticalAlignment(GUIComponent::GUI_VALIGN_TOP);
 	mInvulnerabilityLabel->SetHorizontalAlignment(GUIComponent::GUI_HALIGN_RIGHT);
 	mInvulnerabilityLabel->SetVisible(false);
@@ -437,7 +452,7 @@ void Asteroids::SpawnBonus(const GLVector3f& position)
 	shared_ptr<Sprite> bonus_sprite = make_shared<Sprite>(anim_ptr->GetWidth(), anim_ptr->GetHeight(), anim_ptr);
 	bonus_sprite->SetLoopAnimation(true);
 	bonus->SetSprite(bonus_sprite);
-	bonus->SetScale(-0.03f);
+	bonus->SetScale(0.03f);
 	bonus->SetPosition(position);
 	mGameWorld->AddObject(bonus);
 }
