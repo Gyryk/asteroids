@@ -31,6 +31,16 @@ public:
 		mListeners.push_back(listener);
 	}
 
+	void AddLife()
+	{
+		mLives += 1;
+	}
+
+	int GetLives() const
+	{
+		return mLives;
+	}
+
 	void FirePlayerKilled()
 	{
 		// Send message to all listeners
