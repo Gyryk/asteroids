@@ -57,6 +57,8 @@ void Asteroids::Start()
 
 	Animation *explosion_anim = AnimationManager::GetInstance().CreateAnimationFromFile("explosion", 64, 1024, 64, 64, "explosion_fs.png");
 	Animation *asteroid1_anim = AnimationManager::GetInstance().CreateAnimationFromFile("asteroid1", 128, 8192, 128, 128, "asteroid1_fs.png");
+	Animation *asteroid2_anim = AnimationManager::GetInstance().CreateAnimationFromFile("asteroid2", 128, 8192, 128, 128, "asteroid2_fs.png");
+	Animation *asteroid3_anim = AnimationManager::GetInstance().CreateAnimationFromFile("asteroid3", 64, 4096, 64, 64, "asteroid3_fs.png");
 	Animation *spaceship_anim = AnimationManager::GetInstance().CreateAnimationFromFile("spaceship", 128, 128, 128, 128, "spaceship_fs.png");
 
 	// Create a spaceship and add it to the world
@@ -240,7 +242,8 @@ void Asteroids::CreateAsteroids(const uint num_asteroids)
 	mAsteroidCount = num_asteroids;
 	for (uint i = 0; i < num_asteroids; i++)
 	{
-		Animation *anim_ptr = AnimationManager::GetInstance().GetAnimationByName("asteroid1");
+		string asteroid_name = (rand() % 2 == 0) ? "asteroid1" : "asteroid2";
+		Animation *anim_ptr = AnimationManager::GetInstance().GetAnimationByName(asteroid_name);
 		shared_ptr<Sprite> asteroid_sprite
 			= make_shared<Sprite>(anim_ptr->GetWidth(), anim_ptr->GetHeight(), anim_ptr);
 		asteroid_sprite->SetLoopAnimation(true);
@@ -256,7 +259,7 @@ void Asteroids::CreateSmallAsteroids(const GLVector3f& origin, const GLVector3f&
 {
 	for (int i = 0; i < 2; ++i)
 	{
-		Animation* anim_ptr = AnimationManager::GetInstance().GetAnimationByName("asteroid1");
+		Animation* anim_ptr = AnimationManager::GetInstance().GetAnimationByName("asteroid3");
 		shared_ptr<Sprite> asteroid_sprite =
 			make_shared<Sprite>(anim_ptr->GetWidth(), anim_ptr->GetHeight(), anim_ptr);
 		asteroid_sprite->SetLoopAnimation(true);
@@ -355,7 +358,21 @@ shared_ptr<GameObject> Asteroids::CreateExplosion()
 
 void Asteroids::SpawnBonus(const GLVector3f& position)
 {
-	Bonus::BonusType random_type = static_cast<Bonus::BonusType>(rand() % 3);
+	int probability = rand() % 100;
+	Bonus::BonusType random_type;
+	if(probability < 30)
+	{
+		random_type = Bonus::EXTRA_LIFE;
+	}
+	else if(probability < 90)
+	{
+		random_type = Bonus::INVULNERABILITY;
+	}
+	else
+	{
+		random_type = Bonus::NUKE;
+	}
+
 	shared_ptr<Bonus> bonus = make_shared<Bonus>(random_type, 70000);
 	bonus->SetBoundingShape(make_shared<BoundingSphere>(bonus->GetThisPtr(), 4.0f));
 	Animation* anim_ptr = AnimationManager::GetInstance().GetAnimationByName("explosion");

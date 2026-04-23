@@ -114,7 +114,14 @@ void Asteroid::Bounce(shared_ptr<GameObject> o)
 	other_new_velocity *= BOUNCINESS;
 
 	mPosition += delta * 0.2f;
-	o->SetPosition(o->GetPosition() - delta * 0.2f);
 	mVelocity = this_new_velocity;
-	o->SetVelocity(other_new_velocity);
+
+	if(o->GetType() == GameObjectType("Spaceship"))
+	{
+		o->SetVelocity(other_velocity + (other_new_velocity * 0.5f));
+	}
+	else {
+		o->SetPosition(o->GetPosition() - delta * 0.2f);
+		o->SetVelocity(other_new_velocity);
+	}
 }
