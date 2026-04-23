@@ -264,11 +264,6 @@ void Asteroids::OnTimer(int value)
 	{
 		mGameOverLabel->SetVisible(true);
 	}
-
-	if (value == HIDE_INVULNERABILITY_TEXT)
-	{
-		mInvulnerabilityLabel->SetVisible(false);
-	}
 }
 
 // PROTECTED INSTANCE METHODS /////////////////////////////////////////////////
