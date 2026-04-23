@@ -99,17 +99,19 @@ void Asteroid::Bounce(shared_ptr<GameObject> o)
 	GLVector3f this_velocity = mVelocity;
 	GLVector3f other_velocity = o->GetVelocity();
 
+	GLfloat relative_speed = (this_velocity - other_velocity).dot(delta);
+	if (relative_speed >= 0)
+		return;
+
 	GLfloat this_normal_speed = this_velocity.dot(delta);
 	GLfloat other_normal_speed = other_velocity.dot(delta);
 
-	GLVector3f this_normal = delta * this_normal_speed;
-	GLVector3f other_normal = delta * other_normal_speed;
-	GLVector3f this_tangent = this_velocity - this_normal;
-	GLVector3f other_tangent = other_velocity - other_normal;
-
 	const float BOUNCINESS = (mSize == LARGE) ? LARGE_BOUNCINESS : SMALL_BOUNCINESS;
-	GLVector3f this_new_velocity = (other_normal + this_tangent) * BOUNCINESS;
-	GLVector3f other_new_velocity = (this_normal + other_tangent) * BOUNCINESS;
+	GLVector3f this_new_velocity = this_velocity - (delta * this_normal_speed * 2.0f);
+	GLVector3f other_new_velocity = other_velocity - (delta * other_normal_speed * 2.0f);
+
+	this_new_velocity *= BOUNCINESS;
+	other_new_velocity *= BOUNCINESS;
 
 	mPosition += delta * 0.2f;
 	o->SetPosition(o->GetPosition() - delta * 0.2f);

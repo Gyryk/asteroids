@@ -4,6 +4,7 @@
 #include "Spaceship.h"
 #include "BoundingSphere.h"
 #include "GameObjectType.h"
+#include "Asteroid.h"
 
 using namespace std;
 
@@ -113,7 +114,8 @@ void Spaceship::OnCollision(const GameObjectList &objects)
 	{
 		if ((*it)->GetType() == GameObjectType("Asteroid"))
 		{
-			if (IsInvulnerable()) return;
+			shared_ptr<Asteroid> asteroid = dynamic_pointer_cast<Asteroid>(*it);
+			if (IsInvulnerable() || asteroid->GetSize() == Asteroid::SMALL) return;
 			mWorld->FlagForRemoval(GetThisPtr());
 			return;
 		}

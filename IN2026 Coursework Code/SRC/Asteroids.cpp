@@ -356,7 +356,7 @@ shared_ptr<GameObject> Asteroids::CreateExplosion()
 void Asteroids::SpawnBonus(const GLVector3f& position)
 {
 	Bonus::BonusType random_type = static_cast<Bonus::BonusType>(rand() % 3);
-	shared_ptr<Bonus> bonus = make_shared<Bonus>(random_type, 8000);
+	shared_ptr<Bonus> bonus = make_shared<Bonus>(random_type, 70000);
 	bonus->SetBoundingShape(make_shared<BoundingSphere>(bonus->GetThisPtr(), 4.0f));
 	Animation* anim_ptr = AnimationManager::GetInstance().GetAnimationByName("explosion");
 	shared_ptr<Sprite> bonus_sprite = make_shared<Sprite>(anim_ptr->GetWidth(), anim_ptr->GetHeight(), anim_ptr);
